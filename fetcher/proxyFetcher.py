@@ -15,6 +15,8 @@ __author__ = 'JHao'
 import re
 import json
 from time import sleep
+import subprocess
+import platform
 
 from util.webRequest import WebRequest
 
@@ -169,6 +171,49 @@ class ProxyFetcher(object):
                 yield each['ip']
         except Exception as e:
             print(e)
+            
+    
+    @staticmethod
+    def freeProxyCustom1():
+        # 检查操作系统
+        if platform.system() == "Windows":
+            masscan_command = "masscan -p1-65535 0.0.0.0/0 --max-rate=1000 --exclude 255.255.255.255"
+        else:
+            masscan_command = "sudo masscan -p1-65535 0.0.0.0/0 --max-rate=1000 --exclude 255.255.255.255"
+
+        try:
+            # 使用 Popen 实时获取输出
+            process = subprocess.Popen(masscan_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            proxies = []
+            
+            while True:
+                output = process.stdout.readline()
+                if output == '' and process.poll() is not None:
+                    break  # 命令执行完毕
+
+                if output:
+                    print(output.strip())  # 实时打印输出
+
+                    # 使用正则表达式提取 IP 和端口
+                    match = re.search(r'Discovered open port (\d+)/tcp on (\d+\.\d+\.\d+\.\d+)', output)
+                    if match:
+                        port = match.group(1)
+                        ip = match.group(2)
+                        proxies.append(f"{ip}:{port}")
+
+                        # 这里可以添加逻辑，如果找到两个 IP 就停止扫描
+                        if len(proxies) >= 10:
+                            print("Found 2 proxies, stopping scan.")
+                            process.terminate()  # 停止扫描
+                            break
+
+            # 确保每个 proxy 都是 host:port 正确的格式返回
+            for proxy in proxies:
+                yield proxy
+
+        except Exception as e:
+            print(f"Error occurred: {e}")
 
     # @staticmethod
     # def wallProxy01():

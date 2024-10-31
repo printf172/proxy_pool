@@ -55,12 +55,28 @@ api_list = [
 def index():
     return {'url': api_list}
 
-
+cached_proxies = []
 @app.route('/get/')
 def get():
     https = request.args.get("type", "").lower() == 'https'
-    proxy = proxy_handler.get(https)
-    return proxy.to_dict if proxy else {"code": 0, "src": "no proxy"}
+    count = request.args.get("count", default=1, type=int)  # 获取 count 参数，默认为 1
+    show_info = request.args.get("info", "false").lower() == 'true' 
+    
+    for i in range(count):
+        proxy = proxy_handler.get(https)
+        cached_proxies.append(proxy.to_dict)
+    
+    if cached_proxies:
+        if show_info:
+            # 返回详细信息
+            return jsonify(cached_proxies)
+        else:
+            result = []
+            for proxy in cached_proxies:
+                result.append(proxy['proxy'])
+            return jsonify(result)
+    else:
+        return jsonify({"code": 0, "src": "no proxy"})
 
 
 @app.route('/pop/')
