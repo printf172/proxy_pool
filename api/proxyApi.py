@@ -15,7 +15,9 @@
 -------------------------------------------------
 """
 __author__ = 'JHao'
-
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import platform
 from werkzeug.wrappers import Response
 from flask import Flask, jsonify, request
@@ -55,25 +57,27 @@ api_list = [
 def index():
     return {'url': api_list}
 
-cached_proxies = []
 @app.route('/get/')
 def get():
     https = request.args.get("type", "").lower() == 'https'
     count = request.args.get("count", default=1, type=int)  # 获取 count 参数，默认为 1
     show_info = request.args.get("info", "false").lower() == 'true' 
     
+    cached_proxies = []
     for i in range(count):
         proxy = proxy_handler.get(https)
         if proxy:
             cached_proxies.append(proxy.to_dict)
     
     if cached_proxies:
+        unique_proxies = {proxy['proxy']: proxy for proxy in cached_proxies}.values()
+        unique_proxies_list = list(unique_proxies) 
+        unique_proxies_list
         if show_info:
-            # 返回详细信息
-            return jsonify(cached_proxies)
+            return jsonify(unique_proxies_list)
         else:
             result = []
-            for proxy in cached_proxies:
+            for proxy in unique_proxies_list:
                 result.append(proxy['proxy'])
             return jsonify(result)
     else:
@@ -152,4 +156,10 @@ def runFlask():
 
 
 if __name__ == '__main__':
-    runFlask()
+    while True:
+        proxy = proxy_handler.pop(False)
+        if proxy:
+            print(proxy.to_dict)
+            with open('results.txt', 'a') as file:
+                file.write(str(proxy.to_dict))
+                file.write('\n')

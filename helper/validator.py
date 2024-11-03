@@ -59,7 +59,7 @@ def formatValidator(proxy):
 def httpTimeOutValidator(proxy):
     """ http检测超时 """
 
-    proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "https://{proxy}".format(proxy=proxy)}
+    proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "http://{proxy}".format(proxy=proxy)}
 
     try:
         r = head(conf.httpUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout)
@@ -72,7 +72,7 @@ def httpTimeOutValidator(proxy):
 def httpsTimeOutValidator(proxy):
     """https检测超时"""
 
-    proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "https://{proxy}".format(proxy=proxy)}
+    proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "http://{proxy}".format(proxy=proxy)}
     try:
         r = head(conf.httpsUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout, verify=False)
         return True if r.status_code == 200 else False
