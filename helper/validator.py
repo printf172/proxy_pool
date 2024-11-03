@@ -11,9 +11,11 @@
 -------------------------------------------------
 """
 __author__ = 'JHao'
-
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import re
-from requests import head
+import requests
 from util.six import withMetaclass
 from util.singleton import Singleton
 from handler.configHandler import ConfigHandler
@@ -62,8 +64,8 @@ def httpTimeOutValidator(proxy):
     proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "http://{proxy}".format(proxy=proxy)}
 
     try:
-        r = head(conf.httpUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout)
-        return True if r.status_code == 200 else False
+        r = requests.get(conf.httpUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout)
+        return True if '您的iP地址是' in r.text else False
     except Exception as e:
         return False
 
@@ -74,8 +76,9 @@ def httpsTimeOutValidator(proxy):
 
     proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "http://{proxy}".format(proxy=proxy)}
     try:
-        r = head(conf.httpsUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout, verify=False)
-        return True if r.status_code == 200 else False
+        r = requests.get(conf.httpsUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout, verify=False)
+        print(r.text)
+        return True if '您的iP地址是' in r.text else False
     except Exception as e:
         return False
 
