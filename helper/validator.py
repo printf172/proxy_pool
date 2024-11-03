@@ -77,7 +77,6 @@ def httpsTimeOutValidator(proxy):
     proxies = {"http": "http://{proxy}".format(proxy=proxy), "https": "http://{proxy}".format(proxy=proxy)}
     try:
         r = requests.get(conf.httpsUrl, headers=HEADER, proxies=proxies, timeout=conf.verifyTimeout, verify=False)
-        print(r.text)
         return True if '您的iP地址是' in r.text else False
     except Exception as e:
         return False

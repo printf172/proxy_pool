@@ -22,9 +22,63 @@ from util.webRequest import WebRequest
 
 
 class ProxyFetcher(object):
+    
+    ip_segment = [1, 0]  # 初始 IP 段
     """
     proxy getter
     """
+
+    
+    @staticmethod
+    def freeProxyCustom1():
+        # 更新 IP 段
+        ProxyFetcher.ip_segment[1] += 1
+        if ProxyFetcher.ip_segment[1] >= 256:
+            ProxyFetcher.ip_segment[1] = 0
+            ProxyFetcher.ip_segment[0] += 1
+
+        if ProxyFetcher.ip_segment[0] >= 256:  # 假设上限为 256
+            ProxyFetcher.ip_segment[0] = 1
+        
+        ip_range = f"{ProxyFetcher().ip_segment[0]}.{ProxyFetcher().ip_segment[1]}.0.0/16"
+        # 检查操作系统
+        if platform.system() == "Windows":
+            masscan_command = f"masscan -p1080,3128,8080 {ip_range} --max-rate=1000 --exclude 255.255.255.255"
+        else:
+            masscan_command = f"sudo masscan -p1080,3128,8080 {ip_range} --max-rate=1000 --exclude 255.255.255.255"
+
+        try:
+            # 使用 Popen 实时获取输出
+            process = subprocess.Popen(masscan_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            proxies = []
+            
+            while True:
+                output = process.stdout.readline()
+                if output == '' and process.poll() is not None:
+                    break  # 命令执行完毕
+
+                if output:
+                    print(output.strip())  # 实时打印输出
+
+                    # 使用正则表达式提取 IP 和端口
+                    match = re.search(r'Discovered open port (\d+)/tcp on (\d+\.\d+\.\d+\.\d+)', output)
+                    if match:
+                        port = match.group(1)
+                        ip = match.group(2)
+                        proxies.append(f"{ip}:{port}")
+                else:
+                    # 这里可以添加逻辑，如果找到两个 IP 就停止扫描
+                    print(f"Found {len(proxies)} proxies, stopping scan.")
+                    process.terminate()  # 停止扫描
+                    break
+
+            # 确保每个 proxy 都是 host:port 正确的格式返回
+            for proxy in proxies:
+                yield proxy
+
+        except Exception as e:
+            print(f"Error occurred: {e}")
 
     @staticmethod
     def freeProxy01():
@@ -171,116 +225,3 @@ class ProxyFetcher(object):
                 yield each['ip']
         except Exception as e:
             print(e)
-            
-    
-    @staticmethod
-    def freeProxyCustom1():
-        # 检查操作系统
-        if platform.system() == "Windows":
-            masscan_command = "masscan -p1080,3128,8080 0.0.0.0/0 --max-rate=1000 --exclude 255.255.255.255"
-        else:
-            masscan_command = "sudo masscan -p1080,3128,8080 0.0.0.0/0 --max-rate=1000 --exclude 255.255.255.255"
-
-        try:
-            # 使用 Popen 实时获取输出
-            process = subprocess.Popen(masscan_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-            proxies = []
-            
-            while True:
-                output = process.stdout.readline()
-                if output == '' and process.poll() is not None:
-                    break  # 命令执行完毕
-
-                if output:
-                    print(output.strip())  # 实时打印输出
-
-                    # 使用正则表达式提取 IP 和端口
-                    match = re.search(r'Discovered open port (\d+)/tcp on (\d+\.\d+\.\d+\.\d+)', output)
-                    if match:
-                        port = match.group(1)
-                        ip = match.group(2)
-                        proxies.append(f"{ip}:{port}")
-
-                        # 这里可以添加逻辑，如果找到两个 IP 就停止扫描
-                        if len(proxies) >= 100:
-                            print("Found 2 proxies, stopping scan.")
-                            process.terminate()  # 停止扫描
-                            break
-
-            # 确保每个 proxy 都是 host:port 正确的格式返回
-            for proxy in proxies:
-                yield proxy
-
-        except Exception as e:
-            print(f"Error occurred: {e}")
-
-    # @staticmethod
-    # def wallProxy01():
-    #     """
-    #     PzzQz https://pzzqz.com/
-    #     """
-    #     from requests import Session
-    #     from lxml import etree
-    #     session = Session()
-    #     try:
-    #         index_resp = session.get("https://pzzqz.com/", timeout=20, verify=False).text
-    #         x_csrf_token = re.findall('X-CSRFToken": "(.*?)"', index_resp)
-    #         if x_csrf_token:
-    #             data = {"http": "on", "ping": "3000", "country": "cn", "ports": ""}
-    #             proxy_resp = session.post("https://pzzqz.com/", verify=False,
-    #                                       headers={"X-CSRFToken": x_csrf_token[0]}, json=data).json()
-    #             tree = etree.HTML(proxy_resp["proxy_html"])
-    #             for tr in tree.xpath("//tr"):
-    #                 ip = "".join(tr.xpath("./td[1]/text()"))
-    #                 port = "".join(tr.xpath("./td[2]/text()"))
-    #                 yield "%s:%s" % (ip, port)
-    #     except Exception as e:
-    #         print(e)
-
-    # @staticmethod
-    # def freeProxy10():
-    #     """
-    #     墙外网站 cn-proxy
-    #     :return:
-    #     """
-    #     urls = ['http://cn-proxy.com/', 'http://cn-proxy.com/archives/218']
-    #     request = WebRequest()
-    #     for url in urls:
-    #         r = request.get(url, timeout=10)
-    #         proxies = re.findall(r'<td>(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})</td>[\w\W]<td>(\d+)</td>', r.text)
-    #         for proxy in proxies:
-    #             yield ':'.join(proxy)
-
-    # @staticmethod
-    # def freeProxy11():
-    #     """
-    #     https://proxy-list.org/english/index.php
-    #     :return:
-    #     """
-    #     urls = ['https://proxy-list.org/english/index.php?p=%s' % n for n in range(1, 10)]
-    #     request = WebRequest()
-    #     import base64
-    #     for url in urls:
-    #         r = request.get(url, timeout=10)
-    #         proxies = re.findall(r"Proxy\('(.*?)'\)", r.text)
-    #         for proxy in proxies:
-    #             yield base64.b64decode(proxy).decode()
-
-    # @staticmethod
-    # def freeProxy12():
-    #     urls = ['https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1']
-    #     request = WebRequest()
-    #     for url in urls:
-    #         r = request.get(url, timeout=10)
-    #         proxies = re.findall(r'<td>(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})</td>[\s\S]*?<td>(\d+)</td>', r.text)
-    #         for proxy in proxies:
-    #             yield ':'.join(proxy)
-
-
-if __name__ == '__main__':
-    p = ProxyFetcher()
-    for _ in p.freeProxy06():
-        print(_)
-
-# http://nntime.com/proxy-list-01.htm
