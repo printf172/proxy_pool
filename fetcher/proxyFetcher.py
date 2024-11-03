@@ -177,9 +177,9 @@ class ProxyFetcher(object):
     def freeProxyCustom1():
         # 检查操作系统
         if platform.system() == "Windows":
-            masscan_command = "masscan -p80,443,8080,1080,21,554,990 0.0.0.0/0 --max-rate=1000 --exclude 255.255.255.255"
+            masscan_command = "masscan -p1080,3128,8080 0.0.0.0/0 --max-rate=1000 --exclude 255.255.255.255"
         else:
-            masscan_command = "sudo masscan -p80,443,8080,1080,21,554,990 0.0.0.0/0 --max-rate=1000 --exclude 255.255.255.255"
+            masscan_command = "sudo masscan -p1080,3128,8080 0.0.0.0/0 --max-rate=1000 --exclude 255.255.255.255"
 
         try:
             # 使用 Popen 实时获取输出
@@ -203,7 +203,7 @@ class ProxyFetcher(object):
                         proxies.append(f"{ip}:{port}")
 
                         # 这里可以添加逻辑，如果找到两个 IP 就停止扫描
-                        if len(proxies) >= 10:
+                        if len(proxies) >= 100:
                             print("Found 2 proxies, stopping scan.")
                             process.terminate()  # 停止扫描
                             break

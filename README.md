@@ -121,7 +121,7 @@ docker-compose up -d
 | api | method | Description | params|
 | ----| ---- | ---- | ----|
 | / | GET | api介绍 | None |
-| /get | GET | 随机获取一个代理| 可选参数: `?type=https` 过滤支持https的代理|
+| /get | GET | 随机获取一个代理| 可选参数: `?type=https` 过滤支持https的代理|`?count=1` 返回代理的数量|`?info=true` 是否查看代理详情|
 | /pop | GET | 获取并删除一个代理| 可选参数: `?type=https` 过滤支持https的代理|
 | /all | GET | 获取所有代理 |可选参数: `?type=https` 过滤支持https的代理|
 | /count | GET | 查看代理数量 |None|

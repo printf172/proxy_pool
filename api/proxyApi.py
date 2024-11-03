@@ -64,7 +64,8 @@ def get():
     
     for i in range(count):
         proxy = proxy_handler.get(https)
-        cached_proxies.append(proxy.to_dict)
+        if proxy:
+            cached_proxies.append(proxy.to_dict)
     
     if cached_proxies:
         if show_info:
